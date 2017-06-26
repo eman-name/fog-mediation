@@ -47,8 +47,8 @@ To launch the control and camera service run:
 	
 	$ CAMERA=http://127.0.0.1:9999/cam.mjpg docker-compose up
 
-	Add `--build` if running first time, or you have modified `Dockerfile` for any container.
-	Append `-d` to have it run in background.
+Add `--build` if running first time, or you have modified `Dockerfile` for any container. \
+Append `-d` to have it run in background.
 
 Now try accessing http://localhost:8080 in your web browser.
 
