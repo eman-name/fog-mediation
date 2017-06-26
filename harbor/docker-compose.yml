@@ -1,0 +1,45 @@
+version: "2"
+
+services:
+  control:
+    build: control
+    image: bitclave/control
+    container_name: control
+    command: /mnt/startup.sh
+    env_file: docker-compose.env
+    environment:
+       - GOPATH=/mnt/.go
+       - NETSCAN=localhost:2501
+    volumes:
+      - "./control:/mnt"
+      - "./rpc:/mnt/.rpc"
+    ports:
+      - "8080:8080"
+    network_mode: "host"
+
+  camera:
+    build: camera
+    image: bitclave/camera
+    container_name: camera
+    command: /mnt/startup.sh
+    env_file: docker-compose.env
+    environment:
+       - CAMERA=${CAMERA}
+       - CONTROL=localhost:50051
+    volumes:
+      - "./camera:/mnt"
+      - "./rpc:/mnt/.rpc"
+    depends_on:
+      - "control"
+    network_mode: "host"
+
+  netscan:
+    build: netscan
+    image: bitclave/netscan
+    container_name: netscan
+    command: bash -c "kismet_server -f /mnt/kismet.conf -n -s -c $$HOST_WIFI"
+    env_file: docker-compose.env
+    volumes:
+      - "./netscan/kismet.conf:/mnt/kismet.conf"
+    privileged: true
+    network_mode: "host"

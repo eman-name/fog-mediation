@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html>
+<title>bitclave dashboard</title>
+<head>
+    <style>
+        #output, #devices {
+            font-family: monospace;
+            white-space: pre;
+        }
+        #devices {
+            padding: 10px 0px;
+        }
+        #greeting {
+            font-size: 24pt;
+        }
+        #button {
+            display: block;
+        }
+
+        html, body {
+          background: #333;
+          font-family: Helvetica;
+        }
+
+        .grid-container {
+          position: relative;
+          width: 100%;
+          overflow: hidden;
+          transition: all 0.5s;
+          -webkit-transition: all 0.5s;
+        }
+
+        .toggle {
+          text-align: center;
+          padding: 0;
+          color: white;
+        }
+
+        .toggle li {
+          display: inline;
+          padding: 0 60px;
+        }
+
+        .toggle label {
+          font-size: 1.2em;
+          padding: 0 10px;
+        }
+
+        .grid {
+          margin: 0 auto;
+        }
+
+        .item {
+          color: white;
+          display: table;
+          font-size: 1.4em;
+          text-align: center;
+          margin: 5px;
+          width: 640px;
+        }
+
+        .item:hover .title {
+          opacity: 1;
+          border-style: solid;
+          border-width: 2px;
+        }
+
+        .title {
+          display: table-cell;
+          vertical-align: middle;
+          opacity: 0;
+          transition: opacity 0.5s;
+          -webkit-transition: opacity 0.5s;
+        }
+
+        .i1, .i2, .i3, .i4  {
+          background: #2ecc71;
+          height: 350px;
+        }
+
+        .i5, .i6{
+          background: gray;
+          height: 360px;
+        }
+
+        .expand {
+          transition: width 0.5s, height 0.5s, left 0.5s, top 0.5s;
+          -webkit-transition: width 0.5s, height 0.5s, left 0.5s, top 0.5s;
+          height: 100%;
+          width: 100%;
+          left: 0 !important;
+          top: 0 !important;
+          z-index: 99;
+          text-indent: -9999px;
+        }
+    </style>
+    
+    <script src='http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js'></script>
+    <script src='http://masonry.desandro.com/masonry.pkgd.js'></script>
+
+    <script type="text/javascript">
+    //<![CDATA[
+
+    var $ = x => document.getElementById(x);
+
+    var lastImg;
+
+    function formatUnixTimeStamp(t)
+    {
+        var d = new Date(t * 1000);
+        var year = d.getFullYear();
+        var month = d.getMonth() + 1;
+        if (month < 10) month = "0" + month;
+        var day = d.getDate();
+        if (day < 10) day = "0" + day;
+        var hour = d.getHours();
+        if (hour < 10) hour = "0" + hour;
+        var minute = d.getMinutes();
+        if (minute < 10) minute = "0" + minute;
+        var sec = d.getSeconds();
+        if (sec < 10) sec = "0" + sec;
+        return `${year}-${month}-${day} ${hour}:${minute}:${sec}`;
+    }
+
+    function processDevices(devices)
+    {
+        devices.sort((a, b) =>
+        {
+            if (a.signal == b.signal)
+            {
+                return a.address < b.address ? -1 : a.address > b.address ? +1 : 0;
+            }
+            return b.signal - a.signal;
+        });
+
+        var text = ""
+        for (var i=0; i<devices.length; i++)
+        {
+            var d = devices[i];
+            var t = formatUnixTimeStamp(d.timestamp);
+            text += `${d.address} (${d.man}) ** ${t} ** ${d.signal}\n`;
+        }
+        $("devices").innerText = text;
+    }
+
+    function process(data)
+    {
+        $("greeting").innerText = data.Greeting ? data.Greeting : "";
+
+        processDevices(data.Devices)
+
+        if (!data.Image)
+        {
+            setTimeout(onUpdate, 100);
+            return;
+        }
+
+        if (lastImg == data.Image)
+        {
+            setTimeout(onUpdate, 100);
+            return;
+        }
+
+        lastImg = data.Image;
+
+        var img = new Image();
+        img.onload = function()
+        {
+            var W = img.width/2;
+            var H = img.height/2;
+
+            var canvas = $("canvas");
+            canvas.width = W;
+            canvas.height = H;
+
+            var ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, W, H);
+
+            var faces = data.Faces;
+            var output = "";
+
+            if (faces === null || faces.length == 0)
+            {
+                output = "No faces detected";
+            }
+            else
+            {
+                faces.forEach(face => {
+                    if (face.names[0])
+                    {
+                        output += `${face.names[0].name} with ${face.names[0].quality} probability\n`;
+                    }
+                    else
+                    {
+                        output += `Unknown face detected\n`;
+                    }
+
+                    var x = face.box.left;
+                    var y = face.box.top;
+                    var w = face.box.width;
+                    var h = face.box.height;
+
+                    ctx.beginPath();
+                    ctx.lineWidth = "2";
+                    ctx.strokeStyle = "red";
+                    ctx.rect(W*x, H*y, W*w, H*h);
+                    ctx.stroke();
+                });
+            }
+
+            $("output").innerText = output;
+            setTimeout(onUpdate, 100);
+        };
+        img.src = data.Image;
+    }
+
+    function onUpdate()
+    {
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function()
+        {
+            if (xhr.readyState == 4)
+            {
+                if (xhr.status == 200)
+                {
+                    process(JSON.parse(xhr.responseText));
+                }
+                else
+                {
+                    setTimeout(onUpdate, 100);
+                }
+            }
+        }
+        xhr.open("GET", "status", true);
+        xhr.send();
+    }
+
+    window.onload = () =>
+    {
+        var c = $("container");
+        c.style.display = "none";
+        $("button").onclick = () =>
+        {
+            c.style.display = c.style.display == "none" ? "block" : "none";
+        };
+        onUpdate();
+    }
+
+    jQuery(document).ready(function($) {
+      var $container = $(".grid").masonry({
+        columnWidth: 650,
+        itemSelector: ".item",
+        isFitWidth: true
+      });
+
+      var arrGreen = new Array($(".i1"), $(".i3"), $(".i6"), $(".i7"));
+      var arrRed = new Array(
+        $(".i2"),
+        $(".i4"),
+        $(".i5"),
+        $(".i8"),
+        $(".i9"),
+        $(".i10"),
+        $(".i11"),
+        $(".i12"),
+        $(".i13"),
+        $(".i14"),
+        $(".i15")
+      );
+
+      $(".item").click(function() {
+        $(this).toggleClass("expand");
+      });
+    });
+    
+    //]]>
+    </script>
+
+</head>
+<body>
+    <input id="button" type="button" value="Toggle more details"/>
+    <div id="container">
+        <!--<canvas id="canvas"></canvas>-->
+        <!--<div id="devices"></div>-->
+        <div id="output">
+        </div>
+    </div>
+    <div id="greeting">
+    </div>
+
+    <section class="grid-container">
+      <div class="grid">
+        
+        <a href="#">
+          <div class="item i1">
+            <canvas id="canvas"></canvas>
+            <!--<p class="title">Camera 1</p>-->
+          </div>
+        </a>
+        
+        <!--
+        <a href="#"><div class="item i2"><p class="title">Camera 2 </p></div></a>
+        <a href="#"><div class="item i3"><p class="title">Camera 3 </p></div></a>
+        <a href="#"><div class="item i4"><p class="title">Camera 4</p></div></a>
+        -->
+
+        <a href="#">
+          <div class="item i5">
+            <p class="title">Floorplan</p>
+          </div>
+        </a>
+
+        <a href="#">
+          <div class="item i6" id="devices">
+          <!--<p class="title">Console</p>-->
+        </div>
+        </a>
+
+      </div>
+    </section>
+
+
+</body>
+</html>

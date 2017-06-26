@@ -1,0 +1,19 @@
+diff -ru grpc-1.2.5.org/src/core/lib/support/wrap_memcpy.c grpc-1.2.5/src/core/lib/support/wrap_memcpy.c
+--- grpc-1.2.5.org/src/core/lib/support/wrap_memcpy.c	2017-04-26 22:37:10.163365516 -0700
++++ grpc-1.2.5/src/core/lib/support/wrap_memcpy.c	2017-04-26 22:39:06.024167864 -0700
+@@ -39,15 +39,6 @@
+  * Enable by setting LDFLAGS=-Wl,-wrap,memcpy when linking.
+  */
+ 
+-#ifdef __linux__
+-#ifdef __x86_64__
+-__asm__(".symver memcpy,memcpy@GLIBC_2.2.5");
+-void *__wrap_memcpy(void *destination, const void *source, size_t num) {
+-  return memcpy(destination, source, num);
+-}
+-#else /* !__x86_64__ */
+ void *__wrap_memcpy(void *destination, const void *source, size_t num) {
+   return memmove(destination, source, num);
+ }
+-#endif
+-#endif

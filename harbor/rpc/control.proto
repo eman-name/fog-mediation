@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package bitclave;
+
+service ControlServer {
+  rpc PostFrame(Frame) returns (Empty) {}
+  rpc PostData(Data) returns (Empty) {}
+}
+
+message Empty {
+}
+
+message Frame {
+  bytes image = 1;
+}
+
+message Box {
+  float left = 1;
+  float top = 2;
+  float width = 3;
+  float height = 4;
+}
+
+message Point {
+  float x = 1;
+  float y = 2;
+}
+
+message Markers {
+  repeated Point points = 1;
+}
+
+message Name {
+  string name = 1;
+  float quality = 2;
+}
+
+message Face {
+  Box box = 1;
+  Markers markers = 2;
+  repeated Name names = 3;
+}
+
+message Data {
+  repeated Face faces = 1;
+}
