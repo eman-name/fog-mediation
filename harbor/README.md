@@ -39,6 +39,7 @@ Running
 Execute the following commands to get control webserver and the camera stream running
 
 To use your laptop webcam run: 
+	
 	$ /usr/local/bin/python camera/local_stream.py
 
 Now try accessing the camera feed at http://localhost:9999/cam.mjpg in your web browser.
