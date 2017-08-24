@@ -1,4 +1,4 @@
-##Instructions on set up:
+## Instructions on set up:
 
 The main purpose is to install Openface on both sides, and mount folders which including *client.py* for client side, and *handler.py*, *server.py* for server side.
 
@@ -23,7 +23,7 @@ Let's say `$HOME` for now.
   
   * For classification, you can simple have a folder of images, like *img* or *classify-test/raw*, and then `./client.py classify-test/raw/ classify`. This example use the default model which locate in */root/openface/models/openface/celeb-classifier.nn4.small2.v1.pkl* to predict, but you can indicate our trained model by `./client.py classify-test/raw/ classify $trained_model` Also, this process will create *alignedImg* folder by default (you can change this as well), and upload it to the server to do classification. The server will produce a confidence score for each image.
 
-  ** Pre-partitioned vs stand-alone
+  ## Pre-partitioned vs stand-alone
 
   This is a partitioned version of *exec.py* in this folder. You can compare the running time with it.
 
