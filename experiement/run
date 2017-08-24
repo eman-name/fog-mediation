@@ -1,0 +1,1 @@
+sudo docker run -p 9000:9000 -p 8000:8000 -p 60000:60000 -it -v ~/Documents/Graduate/Summer_2016/research:/research bamos/openface /bin/bash
